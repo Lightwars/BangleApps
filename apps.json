@@ -1764,7 +1764,7 @@
     "icon": "marioclock.png",
     "type": "clock",
     "tags": "clock,mario,retro",
-    "supports": ["BANGLEJS"],
+    "supports": ["BANGLEJS","BANGLEJS2"],
     "readme": "README.md",
     "allow_emulator": false,
     "screenshots": [{"url":"bangle1-mario-clock-screenshot.png"}],
