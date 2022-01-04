@@ -15,7 +15,7 @@ const timeout = settings.timeout || 10;
 const is12Hour = settings["12hour"] || false;
 
 // Screen dimensions
-let W, H;
+let W, H, scaling, X, Y;
 // Screen brightness
 let brightness = 1;
 
@@ -201,37 +201,41 @@ function incrementTimer() {
 }
 
 function drawBackground() {
-  "ram"
+  "ram";
 
   // Clear screen
   const bgColor = (nightMode) ? NIGHT : LIGHTEST;
   g.setColor(bgColor);
-  g.fillRect(0, 10, W, H);
+  g.fillRect(0, 0, (X*scaling)+W, (Y*scaling)+H);
 
   // set cloud colors and draw clouds
   const cloudColor = (nightMode) ? DARK : LIGHT;
   g.setColor(cloudColor);
-  g.fillRect(0, 10, W, 15);
-  g.fillRect(0, 17, W, 17);
-  g.fillRect(0, 19, W, 19);
-  g.fillRect(0, 21, W, 21);
+  g.fillRect(X, Y+(10*scaling), X+W, Y+(15*scaling));
+  g.fillRect(X, Y+(17*scaling), X+W, Y+(17*scaling));
+  g.fillRect(X, Y+(19*scaling), X+W, Y+(19*scaling));
+  g.fillRect(X, Y+(21*scaling), X+W, Y+(21*scaling));
 
   // Date bar
   g.setColor(DARKEST);
-  g.fillRect(0, 0, W, 9);
+  g.fillRect(X, Y,X+W, Y+9*scaling);
 }
 
 function drawFloor() {
-  const fImg = require("heatshrink").decompress(atob("ikDxH+rgATCoIBQAQYDP")); // Floor image
+  if(process.env.HWVERSION!=2) {
+    const fImg = require("heatshrink").decompress(atob("ikDxH+rgATCoIBQAQYDP")); // Floor image
+  } else {
+    const fImg = require("heatshrink").decompress(atob("ikDwcApMkyQCEiFBggCDhEAwACEA"));  // Floor image
+  }
   for (let x = 0; x < 4; x++) {
-    g.drawImage(fImg, x * 20, g.getHeight() - 5);
+    g.drawImage(fImg, x * (20*scaling) + X, H - (5*scaling) + Y, {scale: scaling});
   }
 }
 
 function drawPyramid() {
-  "ram"
+  "ram";
 
-  const pPol = [pyramidSprite.x + 10, H - 5, pyramidSprite.x + 50, pyramidSprite.height, pyramidSprite.x + 90, H - 5]; // Pyramid poly
+  const pPol = [pyramidSprite.x + X + (10*scaling), H + Y - (5*scaling), pyramidSprite.x + X + (50*scaling), pyramidSprite.height + Y, pyramidSprite.x + X + (90*scaling), H + Y - (5*scaling)]; // Pyramid poly
 
   const color = (nightMode) ? DARK : LIGHT;
   g.setColor(color);
@@ -239,24 +243,28 @@ function drawPyramid() {
 
   pyramidSprite.x -= 1;
   // Reset and randomize pyramid if off-screen
-  if (pyramidSprite.x < - 100) {
-    pyramidSprite.x = 90;
-    pyramidSprite.height = genRanNum(25, 60);
+  if (pyramidSprite.x < - (100*scaling)) {
+    pyramidSprite.x = (90*scaling);
+    pyramidSprite.height = genRanNum((25*scaling), (60*scaling));
   }
 }
 
 function drawTreesFrame(x, y) {
-  const tImg = require("heatshrink").decompress(atob("h8GxH+AAMHAAIFCAxADEBYgDCAQYAFCwobOAZAEFBxo=")); // Tree image
+  if(process.env.HWVERSION!=2) {
+    const tImg = require("heatshrink").decompress(atob("h8GxH+AAMHAAIFCAxADEBYgDCAQYAFCwobOAZAEFBxo=")); // Tree image
+  } else {
+    const tImg = require("heatshrink").decompress(atob("h8GwcBkkApMggVJgmQoEkwVBkASBAoMJgkCpEkiVBAQIFByUJkGSBAI=")); // Tree image
+  }
 
-  g.drawImage(tImg, x, y);
+  g.drawImage(tImg, x + X, y + Y, {scale: scaling});
   g.setColor(DARKEST);
-  g.drawLine(x + 6 /* Match stalk to palm tree */, y + 6 /* Match stalk to palm tree */, x + 6, H - 6);
+  g.drawLine(x + X + (6*scaling) /* Match stalk to palm tree */, y + Y + (6*scaling) /* Match stalk to palm tree */, x + X + (6*scaling), H - (6*scaling));
 }
 
 function generateTreeSprite() {
   return {
-    x: 90,
-    y: genRanNum(30, 60)
+    x: (90*scaling),
+    y: genRanNum((30*scaling), (60*scaling))
   };
 }
 
@@ -264,7 +272,7 @@ function drawTrees() {
   // remove first sprite if offscreen
   let firstBackgroundSprite = backgroundArr[0];
   if (firstBackgroundSprite) {
-    if (firstBackgroundSprite.x < -15) backgroundArr.splice(0, 1);
+    if (firstBackgroundSprite.x < (-15*scaling)) backgroundArr.splice(0, 1);
   }
 
   // set background sprite if array empty
@@ -276,8 +284,8 @@ function drawTrees() {
   }
 
   // add random sprites
-  if (backgroundArr.length < 2 && lastBackgroundSprite.x < (16 * 7)) {
-    const randIdx = Math.floor(Math.random() * 25);
+  if (backgroundArr.length < 2 && lastBackgroundSprite.x < (16*scaling * 7)) {
+    const randIdx = Math.floor(Math.random() * 25*scaling);
     if (randIdx < 2) {
       const newSprite = generateTreeSprite();
       backgroundArr.push(newSprite);
@@ -286,21 +294,25 @@ function drawTrees() {
 
   for (x = 0; x < backgroundArr.length; x++) {
     let scenerySprite = backgroundArr[x];
-    scenerySprite.x -= 5;
+    scenerySprite.x -= 5*scaling;
     drawTreesFrame(scenerySprite.x, scenerySprite.y);
   }
 }
 
 function drawCoinFrame(x, y) {
-  const cImg = require("heatshrink").decompress(atob("hkPxH+AAcHAAQIEBIXWAAQNEBIWHAAdcBgQLBA4IODBYQKEBAQMDBelcBaJUBM4QRBNYx1EBQILDR4QHBBISdIBIoA==")); // Coin image
-  g.drawImage(cImg, x, y);
+  if(process.env.HWVERSION!=2) {
+    const cImg = require("heatshrink").decompress(atob("hkPxH+AAcHAAQIEBIXWAAQNEBIWHAAdcBgQLBA4IODBYQKEBAQMDBelcBaJUBM4QRBNYx1EBQILDR4QHBBISdIBIoA==")); // Coin image
+  } else {
+        const cImg = require("heatshrink").decompress(atob("hkPwcBkmQgEkyVA//whMj///9ESn///2Bj//6H9gP//sP6AIO9IIC/2Q/sCn/gv2BFgVIiVApMghI+DyAA==")); // Coin image
+  }
+  g.drawImage(cImg, x + X, y + Y, {scale: scaling});
 }
 
 function drawCoin() {
   if (!coinSprite.isAnimating) return;
 
-  coinSprite.y -= 8;
-  if (coinSprite.y < (0 - 15 /*Coin sprite height*/)) {
+  coinSprite.y -= 8*scaling;
+  if (coinSprite.y < (Y - (15*scaling) /*Coin sprite height*/)) {
     coinSprite.isAnimating = false;
     coinSprite.y = coinSprite.yDefault;
     return;
@@ -311,25 +323,38 @@ function drawCoin() {
 
 function drawDaisyFrame(idx, x, y) {
   var frame;
-
+  if(process.env.HWVERSION!=2) {
   switch(idx) {
     case 2:
       frame = require("heatshrink").decompress(atob("h0UxH+AAkrAIgAH60rAIQNIBQIABDZErAAwMMBwo0CBxQNEHAQGCBpIPCBoQJCDRIXDBpA7DBIQACw5yCJQgZDP4gNErlcJAZ6GAgNcw+HRI4CCDgNcU44ZDDYSYGDIYACB4QaEDYgMFJAg3DFQ5mFBQYA==")); // daisy jumping
       break;
     case 0:
-      frame = require("heatshrink").decompress(atob("h8UxH+AAsHAIgAI60HAIQOJBYIABDpMHAAwNNB4wOJB4gIEHgQBBBxYQCBwYLDDhIaEBxApEw4qDAgIOHDwiIEBwtcFIRWIUgWHw6TIAQXWrlcWZAqBDQIeBBxQaBDxIcCHIQ8JDAIAFWJLPHA=="));
+      frame = require("heatshrink").decompress(atob("h8UxH+AAsHAIgAI60HAIQOJBYIABDpMHAAwNNB4wOJB4gIEHgQBBBxYQCBwYLDDhIaEBxApEw4qDAgIOHDwiIEBwtcFIRWIUgWHw6TIAQXWrlcWZAqBDQIeBBxQaBDxIcCHIQ8JDAIAFWJLPHA==")); // daisy frame 1
       break;
     case 1:
     default:
-      frame = require("heatshrink").decompress(atob("h8UxH+AAsHAIgAI60HAIQOJBYIABDpMHAAwNNB4wOJB4gIEHgQBBBxYQCBwYLDDhIaEBxApEw4qDAgIOHDwiIEBwtcFIRWIUgQvBSZACCBwNcWZQcCAAIPIDgYACFw4YBDYIOCD4waEDYI+HaBQ="));
+      frame = require("heatshrink").decompress(atob("h8UxH+AAsHAIgAI60HAIQOJBYIABDpMHAAwNNB4wOJB4gIEHgQBBBxYQCBwYLDDhIaEBxApEw4qDAgIOHDwiIEBwtcFIRWIUgQvBSZACCBwNcWZQcCAAIPIDgYACFw4YBDYIOCD4waEDYI+HaBQ=")); // daisy frame 2
+  }
+  } else {
+  switch(idx) {
+    case 2:
+      frame = require("heatshrink").decompress(atob("h0UwcBkmShEgyVJknx44IBpMj/0JAoNAC4IFBwAdCBwIFCgVI8EP48AyU4gf/4Ekh0H8eApEDwP48EQgHj///gkABwIvBEIOXgESGQOF/A4BgJLBHwUX/+AAoMEyVLwFJhN//44BpAUBgANBhBHBpIA=")); // daisy jumping
+      break;
+    case 0:
+      frame = require("heatshrink").decompress(atob("h0UwcBkmShEgyVJknx44IBpMj/0JAoNAC4IFBwAdCpMgAgUCpEAh/HgGSgED//AkkB4/jwAOBuP48EQgEf///ggcB8YvBAgMXgESGQOP/A4BgMD0g+Ci8fwRNBwmHpESpML/0/8GSoQMByUEJocB")); // daisy frame 1
+      break;
+    case 1:
+    default:
+      frame = require("heatshrink").decompress(atob("h0UwcBkmShEgyVJknx44IBpMj/0JAoNAC4IFBwAdCpMgAgUCpEAh/HgGSgED//AkkB4/jwAOBuP48EQgEf///ggcB8YvBAgMXgESGQOOnA4BgMDwg+Co8f+BNByPCpMCpMhh///kSpAMByUEyBICgIA=")); // daisy frame 2
+  }
   }
 
-  g.drawImage(frame, x, y);
+  g.drawImage(frame, x + X, y + Y, {scale: scaling});
 }
 
 function drawMarioFrame(idx, x, y) {
   var frame;
-
+  if(process.env.HWVERSION!=2) {
   switch(idx) {
     case 2:
       frame = require("heatshrink").decompress(atob("h8UxH+AAkrAAYFCBo9cAAIEB63WB4gMDB4YOFBowfDw4xDBAYADA4YcDGwYACDoYAEBYYBBw4NDCoYOFDIweFFwoZFAQYIDLAQWGEwqgECI6ECJ4JeGQYS9EB4QTHBwImCBYRtDSAwrFawqkFWY7PEBxoMFKoZaELoYICAAg")); // Mario frame jumping
@@ -341,13 +366,27 @@ function drawMarioFrame(idx, x, y) {
     default:
       frame = require("heatshrink").decompress(atob("h8UxH+AAkrAAYKFBolcAAIPIBgYPDBpgfGFIY7EA4YcEBIPWAAYdDC4gLDAII5ECoYOFDogODFgoJCBwYZCAQYOFBAhAFFwZKGHQpMDw+HCQYEBSowOBBQIeJDAQODSwaVHUhwOLfg4FHe4wASA=")); // Mario frame 2
   }
+  } else {
+  switch(idx) {
+    case 2:
+      frame = require("heatshrink").decompress(atob("h8UwcBkmSA4OApMkwGSgfwpMhBgMfwVIBgILBwUCoEAAQMQyEf//A8EAg/8uP4DoM/8eAgEfwE///+gH/x/H//woACBgH8gFAgYgBgGR/5CBnBBBn8fCIMEv0/jkOiQsBCAMEyEhkAFBkkIpIEBgMgoRNBAgMSoEggRbByA=")); // Mario frame jumping
+      break;
+    case 0:
+      frame = require("heatshrink").decompress(atob("h8UwcBkmSA4OSpMkwAGBAoMhBgMEyVIBgILCgVAgACByGQj//4EkgEH/lwpMj+E/8eAhMfwE///+hH/x/H//woACBgH8gFAgYgBjkR//ggE48GOgEfCIMkuP4jkOhMkh/AKgJTCAgMSAoOEyBTBAoMkyBVBAoMADQOQA")); // Mario Frame 1
+      break;
+    case 1:
+    default:
+      frame = require("heatshrink").decompress(atob("h8UwcBkmSA4OSpMkwAGBAoMhBgMEyVIBgILCgVAgACByGQj//4EkgEH/lwpMj+E/8eAhMfwE///+hH/x/H//woACBgH8gFAgYgBGQNH8EB4I0BEAP+gEkyE/EYMQkgzBgEEwMhkAFBkkJhEAMQMApJiDAQuQ")); // Mario frame 2
+  }
+  }
 
-  g.drawImage(frame, x, y);
+  g.drawImage(frame, x + X, y + Y, {scale: scaling});
 }
 
 function drawToadFrame(idx, x, y) {
   var frame;
 
+  if(process.env.HWVERSION!=2) {
   switch(idx) {
     case 2:
       frame = require("heatshrink").decompress(atob("iEUxH+ACkrAAoNJrnWAAQRGlfWrgACB4QEBCAYOBB44QFB4QICAg4QBBAQbDEgwPCHpAGCGAQ9KAYQPENwoTEH4crw4EDAAgGDB4YABAYIBDP4YLEAAIPHCAQHCCAQTDD4gHDEA4PFGAY3EbooPECob8IPooPFCATGEf44hFAAYLDA==")); // toad jumping
@@ -357,10 +396,23 @@ function drawToadFrame(idx, x, y) {
       break;
     case 1:
     default:
-      frame = require("heatshrink").decompress(atob("iEUxH+ACkHAAoNJrnWAAQRGg/WrgACB4QEBCAYOBB44QFB4QICAg4QBBAQbDEgwPCHpAGCGAQ9KAYQPKCYg/EJAoADAwaKFw4BEP4YQCBIIABB468EB4QADYIoQGDwQOGBYQrDb4wcGFxYLDMoYgHRYgwKABAMBA")); // Mario frame 2
+      frame = require("heatshrink").decompress(atob("iEUxH+ACkHAAoNJrnWAAQRGg/WrgACB4QEBCAYOBB44QFB4QICAg4QBBAQbDEgwPCHpAGCGAQ9KAYQPKCYg/EJAoADAwaKFw4BEP4YQCBIIABB468EB4QADYIoQGDwQOGBYQrDb4wcGFxYLDMoYgHRYgwKABAMBA")); // Toad frame 2
+  }
+  } else {
+  switch(idx) {
+    case 2:
+      frame = require("heatshrink").decompress(atob("iEUwcBkmSpICEBoMCAoOAi//wEJkl0yX/0kBkf0AoP0wEj/2X/sv/Ef1//9Ml/Edkm/AoPQAoQRBAoMg3////Qj+On42BnEDx0A8eOgMgh0/AoUkh0H//+BYN+g/8uPBkF/4/gh0JkEP4//+BZBgE/AoeB4BfDyBrDA=")); // toad jumping
+      break;
+    case 0:
+      frame = require("heatshrink").decompress(atob("iEUwcBkmSpICEBoMCAoOAi//wEJkl0yX/0kBkf0AoP0wEj/2X/sv/Ef1//9Ml/Edkm/AoPQAoQRBAof///Qj+l/42BnED//A8eOgMgv0/AoUkgE///+IIOAg/8uBNBh/H8EOBYN/4//+PBC4fwDoOBGgOAC4OQNYYA==")); // Toad Frame 1
+      break;
+    case 1:
+    default:
+      frame = require("heatshrink").decompress(atob("iEUwcBkmSpICEBoMCAoOAi//wEJkl0yX/0kBkf0AoP0wEj/2X/sv/Ef1//9Ml/Edkm/AoPQAoQRBAof///Qj+l/42BnED//A8eOgMgv0/AoUkgE///+IIOAg/8uBNBh/A8BTCh/4//wAoMB/8fAoWB//8gBlCPQUJA==")); // Toad frame 2
+  }
   }
 
-  g.drawImage(frame, x, y);
+  g.drawImage(frame, x + X, y + Y, {scale: scaling});
 }
 
 // Mario speach bubble
@@ -380,11 +432,11 @@ function drawNotice(x, y) {
       break;
   }
 
-  if (img) g.drawImage(img, characterSprite.x, characterSprite.y - 16);
+  if (img) g.drawImage(img, characterSprite.x + X, characterSprite.y - (16*scaling) + Y, {scale: scaling});
 }
 
 function drawCharacter(date, character) {
-  "ram"
+  "ram";
 
   // calculate jumping
   const seconds = date.getSeconds(),
@@ -395,7 +447,7 @@ function drawCharacter(date, character) {
   }
 
   if (characterSprite.isJumping) {
-    characterSprite.y = (Math.sin(characterSprite.jumpCounter) * -12) + 50 /* Character Y base value */;
+    characterSprite.y = (Math.sin(characterSprite.jumpCounter) * (-12*scaling)) + (50*scaling) /* Character Y base value */;
     characterSprite.jumpCounter += characterSprite.jumpIncrement;
 
     if (parseInt(characterSprite.jumpCounter) === 2 && !coinSprite.isAnimating) {
@@ -432,24 +484,28 @@ function drawCharacter(date, character) {
 }
 
 function drawBrickFrame(x, y) {
-  const brk = require("heatshrink").decompress(atob("ikQxH+/0HACASB6wAQCoPWw4AOrgT/Cf4T/Cb1cAB8H/wVBAB/+A"));
-  g.drawImage(brk, x, y);
+  if(process.env.HWVERSION!=2) {
+    const brk = require("heatshrink").decompress(atob("ikQxH+/0HACASB6wAQCoPWw4AOrgT/Cf4T/Cb1cAB8H/wVBAB/+A"));
+  } else {
+    const brk = require("heatshrink").decompress(atob("ikQwcBkAKFiP/AAn4j4GE/sBBwvQB34OKjskyVJAQUCN4sBA"));
+  }
+  g.drawImage(brk, x+X, y+Y, {scale: scaling});
 }
 
 function drawTime(date) {
   // draw hour brick
-  drawBrickFrame(20, 25);
+  drawBrickFrame(20*scaling, 25*scaling);
   // draw minute brick
-  drawBrickFrame(42, 25);
+  drawBrickFrame(42*scaling, 25*scaling);
 
   const h = date.getHours();
   const hours = ("0" + ((is12Hour && h > 12) ? h - 12 : h)).substr(-2);
   const mins = ("0" + date.getMinutes()).substr(-2);
 
-  g.setFont("6x8");
+  g.setFont("6x8",scaling);
   g.setColor(DARKEST);
-  g.drawString(hours, 25, 29);
-  g.drawString(mins, 47, 29);
+  g.drawString(hours, 25*scaling+X, 29*scaling+Y);
+  g.drawString(mins, 47*scaling+X, 29*scaling+Y);
 }
 
 function buildDateStr(date) {
@@ -533,9 +589,9 @@ function drawInfo(date) {
     xPos = (W - g.stringWidth(str)) / 2;
   }
 
-  g.setFont("6x8");
+  g.setFont("6x8",scaling);
   g.setColor(LIGHTEST);
-  g.drawString(str, xPos, 1);
+  g.drawString(str, xPos+X, 1+Y);
 }
 
 function changeInfoMode() {
@@ -643,30 +699,65 @@ function init() {
 
   clearInterval();
 
-  // Initialise display
-  Bangle.setLCDMode("80x80");
+  if(process.env.HWVERSION!=2) {
+    // Initialise display
+    Bangle.setLCDMode("80x80");
+    // Store screen dimensions
+    W = g.getWidth();
+    H = g.getHeight();
+    X = 0;
+    Y = 0;
+    scaling = 1;
 
-  // Store screen dimensions
-  W = g.getWidth();
-  H = g.getHeight();
+    // Get Mario to jump!
+    setWatch(() => {
+      if (intervalRef && !characterSprite.isJumping) characterSprite.isJumping = true;
+      resetDisplayTimeout();
+      phoneClearMessage(); // Clear any phone messages and message timers
+    }, BTN3, {repeat: true});
 
-  // Get Mario to jump!
-  setWatch(() => {
-    if (intervalRef && !characterSprite.isJumping) characterSprite.isJumping = true;
-    resetDisplayTimeout();
-    phoneClearMessage(); // Clear any phone messages and message timers
-  }, BTN3, {repeat: true});
+    // Close watch and load launcher app
+    setWatch(() => {
+      Bangle.setLCDMode();
+      Bangle.showLauncher();
+    }, BTN2, {repeat: false, edge: "falling"});
 
-  // Close watch and load launcher app
-  setWatch(() => {
-    Bangle.setLCDMode();
-    Bangle.showLauncher();
-  }, BTN2, {repeat: false, edge: "falling"});
+    // Change info mode
+    setWatch(() => {
+      changeInfoMode();
+    }, BTN1, {repeat: true});
+  } else {
+    // Store screen dimensions
+    W = 160; //g.getWidth();
+    H = 160; //g.getHeight();
+    X = 8;
+    Y = 8;
+    scaling = 2;
+    characterSprite.x *= scaling;
+    characterSprite.y *= scaling;
+    coinSprite.x *= scaling;
+    coinSprite.y *= scaling;
+    coinSprite.yDefault *= scaling;
+    pyramidSprite.x *= scaling;
+    pyramidSprite.height *= scaling;
 
-  // Change info mode
-  setWatch(() => {
-    changeInfoMode();
-  }, BTN1, {repeat: true});
+    Bangle.on('touch', (zone, e) => {
+      if(e.y < 81) {
+        // Change info mode
+        changeInfoMode();
+      } else if(e.y > 95) {
+        // Get Mario to jump!
+        if (intervalRef && !characterSprite.isJumping) characterSprite.isJumping = true;
+        resetDisplayTimeout();
+        phoneClearMessage(); // Clear any phone messages and message timers
+      }
+    });
+
+    // Close watch and load launcher app
+    setWatch(() => {
+      Bangle.showLauncher();
+    }, BTN, {repeat: false, edge: "falling"});
+  }
 
   Bangle.on('lcdPower', (on) => on ? startTimers() : clearTimers());
 
